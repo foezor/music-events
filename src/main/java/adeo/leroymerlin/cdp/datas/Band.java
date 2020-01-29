@@ -1,7 +1,12 @@
-package adeo.leroymerlin.cdp;
+package adeo.leroymerlin.cdp.datas;
 
-import javax.persistence.*;
 import java.util.Set;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 @Entity
 public class Band {
