@@ -1,7 +1,12 @@
-package adeo.leroymerlin.cdp;
+package adeo.leroymerlin.cdp.datas;
 
-import javax.persistence.*;
 import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 @Entity
 public class Band {
@@ -12,7 +17,7 @@ public class Band {
 
     private String name;
 
-    @OneToMany(fetch=FetchType.EAGER)
+  @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Member> members;
 
     public Set<Member> getMembers() {
