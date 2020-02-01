@@ -1,10 +1,13 @@
 package adeo.leroymerlin.cdp.services;
 
+import adeo.leroymerlin.cdp.datas.Band;
 import adeo.leroymerlin.cdp.datas.Event;
 import adeo.leroymerlin.cdp.datas.EventNotFoundException;
 import adeo.leroymerlin.cdp.repositories.EventRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,9 +29,24 @@ public class EventService {
 
   public List<Event> getFilteredEvents(String query) {
     List<Event> events = eventRepository.findAllBy();
-    // Filter the events list in pure JAVA here
+    final List<Event> filtered = events.stream().filter(
+        event ->
+            event.getBands().stream().anyMatch(
+                brand ->
+                    brand.getMembers().stream().anyMatch(
+                        member -> member.getName().toLowerCase().contains(query.toLowerCase())
+                    )
+            )
+    ).collect(Collectors.toList());
+    filtered.forEach(event -> {
+      final Set<Band> bands = event.getBands();
+      NameDecorator.addNumbersOfChildToName(bands, event.getTitle(), event::setTitle);
+      bands.forEach(band ->
+          NameDecorator.addNumbersOfChildToName(band.getMembers(), band.getName(), band::setName)
+      );
+    });
+    return filtered;
 
-    return events;
   }
 
   public Event updateEvent(Event event) {
