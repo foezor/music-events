@@ -2,13 +2,20 @@ package adeo.leroymerlin.cdp.repositories;
 
 import adeo.leroymerlin.cdp.datas.Event;
 import java.util.List;
-import org.springframework.data.repository.Repository;
+import java.util.Optional;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-@Transactional(readOnly = true)
-public interface EventRepository extends Repository<Event, Long> {
 
-    void delete(Long eventId);
+public interface EventRepository extends CrudRepository<Event, Long> {
 
+  Optional<Event> findById(Long eventId);
+
+  /**
+   * we want to persist modification in database so the readOnly flag is only for this method since there is only read.
+   *
+   * @return list of all events.
+   */
+  @Transactional(readOnly = true)
     List<Event> findAllBy();
 }

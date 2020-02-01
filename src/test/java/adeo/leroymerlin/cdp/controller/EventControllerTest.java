@@ -3,22 +3,28 @@ package adeo.leroymerlin.cdp.controller;
 
 import static java.util.Arrays.asList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import adeo.leroymerlin.cdp.datas.Event;
+import adeo.leroymerlin.cdp.datas.EventNotFoundException;
 import adeo.leroymerlin.cdp.services.EventService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,14 +39,16 @@ public class EventControllerTest {
   private final String BASE_URL = "/api/events/";
   private Event simpleEvent = new Event();
   private Event completeEvent = new Event();
-
+  private String bodyContent;
   @Before
-  public void setUp() throws Exception {
+  public void setUp() throws JsonProcessingException {
     simpleEvent.setId(1L);
     completeEvent.setId(2L);
     completeEvent.setComment("fake comment");
     completeEvent.setImgUrl("http://awesomeImageUrl");
     completeEvent.setTitle("super event");
+    ObjectMapper objectMapper = new ObjectMapper();
+    bodyContent = objectMapper.writeValueAsString(completeEvent);
   }
 
   @Test
@@ -84,5 +92,29 @@ public class EventControllerTest {
   public void shouldCall_eventServiceDelete_whenCallingDeleteOnEventController() throws Exception {
     mockedContextServer.perform(delete(BASE_URL + "1")).andExpect(status().isOk());
     verify(eventService).delete(1L);
+  }
+
+  @Test
+  public void shouldCall_eventServiceUpdate_whenCallingUpdateOnEventController() throws Exception {
+    mockedContextServer.perform(put(BASE_URL + "2").content(bodyContent).contentType(MediaType.APPLICATION_JSON));
+    verify(eventService).updateEvent(any(Event.class));
+  }
+
+  @Test
+  public void shouldReturn400BadParameter_whenCallingUpdateOnController_withDifferentIdInPathAndBody() throws Exception {
+    mockedContextServer.perform(put(BASE_URL + "11")
+        .content(bodyContent)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void shouldReturn404NotFound_whenCallingUpdateOnController_withNonExistingEventInDatabase() throws Exception {
+    given(eventService.updateEvent(any(Event.class))).willThrow(new EventNotFoundException("message"));
+    mockedContextServer.perform(put(BASE_URL + 2)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(bodyContent))
+        .andExpect(status().isNotFound());
+
   }
 }
